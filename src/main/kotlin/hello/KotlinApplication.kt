@@ -41,7 +41,7 @@ class KotlinApplication {
                 val target = others.values.maxByOrNull(PlayerState::score) ?: return@flatMap randomAction
                 ServerResponse.ok().body(
                     Mono.just(
-                        self.getAction(target).name
+                        self.getAction(target, map).name
                     )
                 )
             }
@@ -55,13 +55,23 @@ fun PlayerState.dodge(map: List<List<PlayerState?>>, w: Int, h: Int): Action {
         if (
             player.y > y && player.direction == Direction.N ||
             player.y < y && player.direction == Direction.S
-        ) return turnToOrElse(if (x < w / 2) Direction.E else Direction.W, Action.F)
+        ) return turnToOrElse(if (x < w / 2) Direction.E else Direction.W, forward(map))
         if (
             player.x > x && player.direction == Direction.W ||
             player.x < x && player.direction == Direction.E
-        ) return turnToOrElse(if (y < h / 2) Direction.S else Direction.W, Action.F)
+        ) return turnToOrElse(if (y < h / 2) Direction.S else Direction.W, forward(map))
     }
     return Action.T
+}
+
+fun PlayerState.forward(map: List<List<PlayerState?>>): Action {
+    val targetGrid = when (direction) {
+        Direction.N -> map[y - 1][x]
+        Direction.W -> map[y][x - 1]
+        Direction.S -> map[y + 1][x]
+        Direction.E -> map[y][x + 1]
+    }
+    return if (targetGrid != null) Action.T else Action.F
 }
 
 val randomAction get() = ServerResponse.ok().body(Mono.just(listOf("F", "R", "L", "T").random()))
@@ -70,7 +80,7 @@ fun PlayerState.absDelta(target: PlayerState) = abs(dx(target)) + abs(dy(target)
 fun PlayerState.dx(target: PlayerState) = target.x - x
 fun PlayerState.dy(target: PlayerState) = target.y - y
 
-fun PlayerState.getAction(target: PlayerState): Action {
+fun PlayerState.getAction(target: PlayerState, map: MutableList<MutableList<PlayerState?>>): Action {
     val dx = dx(target)
     val dy = dy(target)
     val absDelta = absDelta(target)
@@ -81,10 +91,10 @@ fun PlayerState.getAction(target: PlayerState): Action {
         dy < 0 -> Direction.N
         else -> Direction.E // never
     }
-    if (absDelta == 1) Action.T else Action.F
+    if (absDelta == 1) Action.T else forward(map)
     return turnToOrElse(
         dir,
-        if (absDelta == 1) Action.T else Action.F
+        if (absDelta == 1) Action.T else forward(map)
     ).also {
         println(
             """
