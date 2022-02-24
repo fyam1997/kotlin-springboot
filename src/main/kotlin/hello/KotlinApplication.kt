@@ -23,17 +23,9 @@ class KotlinApplication {
             request.bodyToMono(ArenaUpdate::class.java).flatMap { arenaUpdate ->
                 val self = arenaUpdate.arena.state[arenaUpdate._links.self.href] ?: return@flatMap randomAction
                 val others = arenaUpdate.arena.state - arenaUpdate._links.self.href
-                val (targetName, target) = others.entries.sortedBy { (_, player) ->
+                val target = others.values.sortedBy { player ->
                     self.absDelta(player)
-                }.firstOrNull { !it.value.wasHit } ?: return@flatMap randomAction
-
-                println(
-                    """
-                    self = ${self.x}, ${self.y}
-                    target = $targetName
-                """.trimIndent()
-                )
-                self.getAction(target)
+                }.firstOrNull { !it.wasHit } ?: return@flatMap randomAction
 
                 ServerResponse.ok().body(Mono.just(self.getAction(target).name))
             }
@@ -62,7 +54,18 @@ fun PlayerState.getAction(target: PlayerState): Action {
     return turnToOrElse(
         dir,
         if (absDelta == 1) Action.T else Action.F
-    )
+    ).also {
+        println(
+            """
+            self = $x, $y
+            target = ${target.x}, ${target.y}
+            dx = $dx
+            dy = $dy
+            absDelta = $absDelta
+            dir = $dir
+        """.trimIndent()
+        )
+    }
 }
 
 fun PlayerState.turnToOrElse(dir: Direction, action: Action) = when (direction) {
