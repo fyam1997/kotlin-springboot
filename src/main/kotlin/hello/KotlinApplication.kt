@@ -8,6 +8,7 @@ import org.springframework.web.reactive.function.server.ServerResponse
 import org.springframework.web.reactive.function.server.body
 import org.springframework.web.reactive.function.server.router
 import reactor.core.publisher.Mono
+import kotlin.math.abs
 
 @SpringBootApplication
 class KotlinApplication {
@@ -20,12 +21,24 @@ class KotlinApplication {
 
         POST("/**", accept(APPLICATION_JSON)) { request ->
             request.bodyToMono(ArenaUpdate::class.java).flatMap { arenaUpdate ->
-                println(arenaUpdate)
+                val self = arenaUpdate.arena.state[arenaUpdate._links.self.href]
+                    ?: return@flatMap ServerResponse.ok().body(Mono.just(listOf("F", "R", "L", "T").random()))
+                val others = arenaUpdate.arena.state - arenaUpdate._links.self.href
+                val (targetName, target) = others.entries.sortedBy { (key, player) ->
+                    abs(self.x - player.x) + abs(self.x - player.y)
+                }.first { !it.value.wasHit }
+
+                println("""
+                    self = ${self.x}, ${self.y}
+                    target = $targetName
+                """.trimIndent())
+
                 ServerResponse.ok().body(Mono.just(listOf("F", "R", "L", "T").random()))
             }
         }
     }
 }
+
 
 fun main(args: Array<String>) {
     runApplication<KotlinApplication>(*args)
