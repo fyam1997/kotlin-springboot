@@ -23,9 +23,9 @@ class KotlinApplication {
             request.bodyToMono(ArenaUpdate::class.java).flatMap { arenaUpdate ->
                 val self = arenaUpdate.arena.state[arenaUpdate._links.self.href] ?: return@flatMap randomAction
                 val others = arenaUpdate.arena.state - arenaUpdate._links.self.href
-                val target = others.values.sortedBy { player ->
-                    self.absDelta(player)
-                }.firstOrNull() ?: return@flatMap randomAction
+                val target = others.values.maxByOrNull { player ->
+                    player.score
+                } ?: return@flatMap randomAction
 
                 ServerResponse.ok().body(Mono.just(self.getAction(target).name))
             }
