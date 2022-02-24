@@ -22,12 +22,46 @@ class KotlinApplication {
         POST("/**", accept(APPLICATION_JSON)) { request ->
             request.bodyToMono(ArenaUpdate::class.java).flatMap { arenaUpdate ->
                 val self = arenaUpdate.arena.state[arenaUpdate._links.self.href] ?: return@flatMap randomAction
+
+                val (w, h) = arenaUpdate.arena.dims
+                val map = MutableList(h) { MutableList<PlayerState?>(w) { null } }
+                arenaUpdate.arena.state.values.forEach { player ->
+                    map[player.y][player.x] = player
+                }
+
+                if (self.wasHit) {
+                    ServerResponse.ok().body(
+                        Mono.just(
+                            self.dodge(map, w, h).name
+                        )
+                    )
+                }
+
                 val others = arenaUpdate.arena.state - arenaUpdate._links.self.href
                 val target = others.values.maxByOrNull(PlayerState::score) ?: return@flatMap randomAction
-                ServerResponse.ok().body(Mono.just(self.getAction(target).name))
+                ServerResponse.ok().body(
+                    Mono.just(
+                        self.getAction(target).name
+                    )
+                )
             }
         }
     }
+}
+
+fun PlayerState.dodge(map: List<List<PlayerState?>>, w: Int, h: Int): Action {
+    for (player in map[y]) {
+        if (player == null) continue
+        if (
+            player.y > y && player.direction == Direction.N ||
+            player.y < y && player.direction == Direction.S
+        ) return turnToOrElse(if (x < w / 2) Direction.E else Direction.W, Action.F)
+        if (
+            player.x > x && player.direction == Direction.W ||
+            player.x < x && player.direction == Direction.E
+        ) return turnToOrElse(if (y < h / 2) Direction.S else Direction.W, Action.F)
+    }
+    return Action.T
 }
 
 val randomAction get() = ServerResponse.ok().body(Mono.just(listOf("F", "R", "L", "T").random()))
