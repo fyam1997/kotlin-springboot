@@ -35,7 +35,7 @@ class KotlinApplication {
                 )
                 self.getAction(target)
 
-                ServerResponse.ok().body(Mono.just(self.getAction(target)))
+                ServerResponse.ok().body(Mono.just(self.getAction(target).name))
             }
         }
     }
