@@ -71,27 +71,27 @@ fun PlayerState.getAction(target: PlayerState): Action {
 
 fun PlayerState.turnToOrElse(dir: Direction, action: Action) = when (direction) {
     Direction.N -> when (dir) {
-        Direction.W -> Action.R
         Direction.S -> Action.R
-        Direction.E -> Action.L
-        else -> action
-    }
-    Direction.W -> when (dir) {
-        Direction.N -> Action.L
-        Direction.S -> Action.R
-        Direction.E -> Action.R
-        else -> action
-    }
-    Direction.S -> when (dir) {
-        Direction.N -> Action.R
         Direction.W -> Action.L
         Direction.E -> Action.R
         else -> action
     }
-    Direction.E -> when (dir) {
+    Direction.W -> when (dir) {
+        Direction.E -> Action.R
+        Direction.N -> Action.R
+        Direction.S -> Action.L
+        else -> action
+    }
+    Direction.S -> when (dir) {
         Direction.N -> Action.R
         Direction.W -> Action.R
-        Direction.S -> Action.L
+        Direction.E -> Action.L
+        else -> action
+    }
+    Direction.E -> when (dir) {
+        Direction.W -> Action.R
+        Direction.N -> Action.L
+        Direction.S -> Action.R
         else -> action
     }
 }
