@@ -25,7 +25,7 @@ class KotlinApplication {
                 val others = arenaUpdate.arena.state - arenaUpdate._links.self.href
                 val target = others.values.sortedBy { player ->
                     self.absDelta(player)
-                }.firstOrNull { !it.wasHit } ?: return@flatMap randomAction
+                }.firstOrNull() ?: return@flatMap randomAction
 
                 ServerResponse.ok().body(Mono.just(self.getAction(target).name))
             }
