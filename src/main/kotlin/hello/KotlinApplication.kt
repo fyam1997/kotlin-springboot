@@ -63,6 +63,7 @@ fun PlayerState.getAction(target: PlayerState): Action {
             dy = $dy
             absDelta = $absDelta
             dir = $dir
+            action = $it
         """.trimIndent()
         )
     }
