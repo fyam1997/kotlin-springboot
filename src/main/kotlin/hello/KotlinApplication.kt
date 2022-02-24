@@ -30,7 +30,7 @@ class KotlinApplication {
                 }
 
                 if (self.wasHit) {
-                    ServerResponse.ok().body(
+                    return@flatMap ServerResponse.ok().body(
                         Mono.just(
                             self.dodge(map, w, h).name
                         )
